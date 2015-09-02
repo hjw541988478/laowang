@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/id_laowang_img_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="240dp">
+
+
+        <ImageView
+            android:id="@+id/id_laowang_img"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_img_splash" />
+
+
+        <ImageView
+            android:id="@+id/id_laowang_img_gif_marker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/ic_gif_flag"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp"
+        android:paddingLeft="12dp"
+        android:paddingTop="16dp">
+
+        <TextView
+            android:id="@+id/id_laowang_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="3dp"
+            android:paddingRight="12dp"
+            android:text="sdawdadsadadwqdasdasdsadawdasdasdawdasdawdadsadadwqdasdawdawdasdwdasdawdasdawdas..."
+            android:textColor="@color/item_text_color"
+            android:textSize="16sp" />
+
+    </RelativeLayout>
+</LinearLayout>
