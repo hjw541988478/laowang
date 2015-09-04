@@ -20,26 +20,26 @@
             android:src="@drawable/ic_arrow_left" />
 
         <TextView
-            android:layout_toRightOf="@id/id_detail_back"
             android:id="@+id/id_detail_text"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_centerHorizontal="true"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:singleLine="true"
+            android:layout_toRightOf="@id/id_detail_back"
+            android:clickable="true"
             android:ellipsize="marquee"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:scrollHorizontally="true"
-            android:clickable="true"
+            android:gravity="center"
             android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
             android:text="%s %s/%s"
-            android:gravity="center" />
+            android:textColor="@color/white"
+            android:textSize="18sp" />
 
     </RelativeLayout>
 
-    <android.support.v4.view.ViewPager
+    <com.ywxy.laowang.ui.DetailViewPager
         android:id="@+id/id_laowang_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -108,3 +108,5 @@ public static final int *;
 -keepclassmembers class * implements java.io.Serializable {
     <fields>;
 }
+
+-keep public class * extends com.umeng.**

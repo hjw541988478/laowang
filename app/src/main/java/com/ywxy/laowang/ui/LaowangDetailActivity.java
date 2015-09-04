@@ -11,10 +11,10 @@ import android.widget.TextView;
 import com.baidu.mobads.InterstitialAd;
 import com.umeng.analytics.MobclickAgent;
 import com.ywxy.laowang.R;
-import com.ywxy.laowang.common.util.Logger;
 import com.ywxy.laowang.common.base.BaseActivity;
 import com.ywxy.laowang.common.bean.LaowangItem;
 import com.ywxy.laowang.common.bean.LaowangItemList;
+import com.ywxy.laowang.common.util.Logger;
 import com.ywxy.laowang.net.RequestManager;
 
 import butterknife.Bind;
@@ -28,11 +28,11 @@ public class LaowangDetailActivity extends BaseActivity {
     public static final String KEY_CUR_POS = "key_cur_pos";
 
     @Bind(R.id.id_laowang_pager)
-    ViewPager mPager;
+    DetailViewPager mPager;
 
     @Bind(R.id.id_detail_text)
     TextView mText;
-
+    InterstitialAd interAd;
     private LaowangItemList itemList = new LaowangItemList();
     private int curPos = 0;
 
@@ -61,8 +61,6 @@ public class LaowangDetailActivity extends BaseActivity {
         setResult(RESULT_OK, resultIntent);
         super.onBackPressed();
     }
-
-    InterstitialAd interAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

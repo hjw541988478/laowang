@@ -14,7 +14,6 @@ import com.umeng.analytics.MobclickAgent;
 import com.umeng.message.PushAgent;
 import com.umeng.message.UTrack;
 import com.umeng.message.UmengMessageHandler;
-import com.umeng.message.UmengNotificationClickHandler;
 import com.umeng.message.entity.UMessage;
 import com.ywxy.laowang.R;
 
@@ -89,9 +88,9 @@ public class MyApp extends Application {
                         myNotificationView.setImageViewBitmap(R.id.notification_large_icon, getLargeIcon(context, msg));
                         myNotificationView.setImageViewResource(R.id.notification_small_icon, getSmallIconId(context, msg));
                         builder.setContent(myNotificationView);
+                        builder.setSmallIcon(R.mipmap.ic_launcher);
                         builder.setAutoCancel(true);
                         Notification mNotification = builder.build();
-                        mNotification.icon = R.mipmap.ic_launcher;
                         //由于Android v4包的bug，在2.3及以下系统，Builder创建出来的Notification，并没有设置RemoteView，故需要添加此代码
                         mNotification.contentView = myNotificationView;
                         return mNotification;
