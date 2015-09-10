@@ -88,11 +88,11 @@ public class MyApp extends Application {
                         myNotificationView.setImageViewBitmap(R.id.notification_large_icon, getLargeIcon(context, msg));
                         myNotificationView.setImageViewResource(R.id.notification_small_icon, getSmallIconId(context, msg));
                         builder.setContent(myNotificationView);
-                        builder.setSmallIcon(R.mipmap.ic_launcher);
                         builder.setAutoCancel(true);
                         Notification mNotification = builder.build();
                         //由于Android v4包的bug，在2.3及以下系统，Builder创建出来的Notification，并没有设置RemoteView，故需要添加此代码
                         mNotification.contentView = myNotificationView;
+                        mNotification.icon = R.mipmap.ic_launcher;
                         return mNotification;
                     default:
                         //默认为0，若填写的builder_id并不存在，也使用默认。

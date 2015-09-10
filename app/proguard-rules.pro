@@ -110,3 +110,15 @@ public static final int *;
 }
 
 -keep public class * extends com.umeng.**
+
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
+    **[] $VALUES;
+    public *;
+}
+
+-keep public class pl.droidsonroids.gif.GifIOException{<init>(int);}
+-keep class pl.droidsonroids.gif.GifInfoHandle{<init>(long,int,int,int);}
+
+#PICASSO
+-dontwarn com.squareup.okhttp.**

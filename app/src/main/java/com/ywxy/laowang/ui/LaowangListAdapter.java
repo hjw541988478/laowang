@@ -8,11 +8,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.ywxy.laowang.R;
 import com.ywxy.laowang.common.bean.LaowangItemList;
-import com.ywxy.laowang.net.RequestManager;
 
 /**
  * Created by hjw on 2015/8/29 0029.
@@ -22,21 +21,19 @@ public class LaowangListAdapter extends RecyclerView.Adapter<LaowangListAdapter.
     private View loadMoreView = null;
     private View endFooterView = null;
 
+
     private LaowangItemList mLaowangList = new LaowangItemList();
     private Context context;
 
     private OnItemClickListener listener;
-
-    public LaowangItemList getData() {
-        return mLaowangList;
-    }
-
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        this.listener = listener;
-    }
+    private boolean isNeedLoadMore = false;
 
     public LaowangListAdapter(Context context) {
         this.context = context;
+    }
+
+    public LaowangItemList getData() {
+        return mLaowangList;
     }
 
     public void setData(LaowangItemList mLaowangList) {
@@ -45,17 +42,13 @@ public class LaowangListAdapter extends RecyclerView.Adapter<LaowangListAdapter.
         notifyDataSetChanged();
     }
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     public void appendData(LaowangItemList mLaowangList) {
         this.mLaowangList.mLaowangList.addAll(mLaowangList.mLaowangList);
         notifyDataSetChanged();
-    }
-
-    private boolean isNeedLoadMore = false;
-
-    public class VIEW_TYPES {
-        public static final int TYPE_LOADMORE_FOOTER = 0x101;
-        public static final int TYPE_NORMAL = 0x102;
-        public static final int TYPE_LOADEND_FOOTER = 0x103;
     }
 
     public void setFooterView(View loadMoreView, View endFooterView) {
@@ -99,10 +92,13 @@ public class LaowangListAdapter extends RecyclerView.Adapter<LaowangListAdapter.
     }
 
     @Override
-    public void onBindViewHolder(LaowangViewHolder holder, final int position) {
+    public void onBindViewHolder(final LaowangViewHolder holder, final int position) {
         if (holder.isItem) {
             String url = mLaowangList.mLaowangList.get(position).item_url;
-            RequestManager.getInstance(context).loadNetworkImage(holder.l_img, url);
+            Glide.with(context).load(url)
+                    .placeholder(R.drawable.ic_default_img)
+                    .error(R.drawable.ic_default_img)
+                    .crossFade().into(holder.l_img);
             holder.l_text.setText(mLaowangList.mLaowangList.get(position).item_text);
             holder.mRootView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -114,13 +110,22 @@ public class LaowangListAdapter extends RecyclerView.Adapter<LaowangListAdapter.
         }
     }
 
-
     public int getAdapterItemCount() {
         return mLaowangList.mLaowangList.size();
     }
 
     public boolean hasFooterView() {
         return loadMoreView != null || endFooterView != null;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int pos);
+    }
+
+    public class VIEW_TYPES {
+        public static final int TYPE_LOADMORE_FOOTER = 0x101;
+        public static final int TYPE_NORMAL = 0x102;
+        public static final int TYPE_LOADEND_FOOTER = 0x103;
     }
 
     public class LaowangViewHolder extends RecyclerView.ViewHolder {
@@ -144,9 +149,5 @@ public class LaowangListAdapter extends RecyclerView.Adapter<LaowangListAdapter.
                 this.isItem = false;
         }
 
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(int pos);
     }
 }

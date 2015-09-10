@@ -1,7 +1,5 @@
 package com.ywxy.laowang.ui;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,56 +8,54 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.baidu.mobads.AdView;
 import com.baidu.mobads.IconsAd;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.message.PushAgent;
 import com.umeng.update.UmengUpdateAgent;
 import com.ywxy.laowang.R;
-import com.ywxy.laowang.common.util.Logger;
 import com.ywxy.laowang.common.base.BaseActivity;
-import com.ywxy.laowang.common.bean.LaowangItem;
 import com.ywxy.laowang.common.bean.LaowangItemList;
+import com.ywxy.laowang.common.util.Logger;
 import com.ywxy.laowang.net.RequestManager;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import java.lang.reflect.Field;
 
 
 public class MainActivity extends BaseActivity {
 
     private static final int REQUEST_DETAIL_CHECK = 0x100;
-    private boolean isBannerAdClicked = false;
-    @Bind(R.id.id_toolbar)
     Toolbar mToolbar;
-
-    @Bind(R.id.id_swipe_refresh)
     SwipeRefreshLayout mSwipeRefresh;
-
-    @Bind(R.id.id_refresh_list)
     RecyclerView mRefreshList;
-
-
-    @Bind(R.id.id_banner_container)
     RelativeLayout mBannerContainer;
-
-    @Bind(R.id.id_banner_close)
     ImageView mBannerClose;
-
-    @Bind(R.id.id_laowang_tip)
     TextView mTextTip;
+    LaowangListAdapter adapter;
+    Handler mHandler;
+    private boolean isBannerAdClicked = false;
+    private AdView mCurAdView;
+    private IconsAd iconsAd;
+    private float mStartY = 0, mLastY = 0, mLastDeltaY;
+    private boolean isToolbarShow = true;
+    private int deltaY = 0;
+    private int mLastVisibleItemPosition = 0;
+    private int page = 1;
+    private boolean isRefresh = false;
+    private RequestManager.OnLaowangItemsRequestListener listener = null;
 
-    @OnClick(R.id.id_banner_close)
-    void onBannerClose() {
+    private void onBannerClose() {
         if (mBannerClose.isShown()) {
             if (!isBannerAdClicked) {
                 isBannerAdClicked = true;
@@ -72,14 +68,6 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private AdView mCurAdView;
-    private IconsAd iconsAd;
-
-    LaowangListAdapter adapter;
-
-    Handler mHandler;
-
-
     @Override
     protected void onDestroy() {
         if (mCurAdView != null)
@@ -91,7 +79,6 @@ public class MainActivity extends BaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
 
         PushAgent.getInstance(this).onAppStart();
 
@@ -101,13 +88,11 @@ public class MainActivity extends BaseActivity {
         UmengUpdateAgent.update(this);
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_DETAIL_CHECK) {
                 int curPos = data.getIntExtra(LaowangDetailActivity.KEY_CUR_POS, 0);
-                Logger.d("onActivityResult:curPos:" + curPos);
                 mRefreshList.getLayoutManager().scrollToPosition(curPos);
             }
         }
@@ -127,8 +112,21 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initViews() {
+        mToolbar = (Toolbar) findViewById(R.id.id_toolbar);
+        mSwipeRefresh = (SwipeRefreshLayout) findViewById(R.id.id_swipe_refresh);
+        mRefreshList = (RecyclerView) findViewById(R.id.id_refresh_list);
+        mBannerContainer = (RelativeLayout) findViewById(R.id.id_banner_container);
+        mBannerClose = (ImageView) findViewById(R.id.id_banner_close);
+        mTextTip = (TextView) findViewById(R.id.id_laowang_tip);
+        mBannerClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBannerClose();
+            }
+        });
         if (mToolbar != null)
             setSupportActionBar(mToolbar);
+
 
         mHandler = new Handler(Looper.getMainLooper());
         mRefreshList.setLayoutManager(new LinearLayoutManager(this));
@@ -161,6 +159,25 @@ public class MainActivity extends BaseActivity {
                 loadListData();
             }
         });
+        ViewTreeObserver vto = mSwipeRefresh.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            public void onGlobalLayout() {
+
+                final DisplayMetrics metrics = getResources().getDisplayMetrics();
+                Float mDistanceToTriggerSync = 800 * metrics.density;
+
+                try {
+                    Field field = SwipeRefreshLayout.class.getDeclaredField("mDistanceToTriggerSync");
+                    field.setAccessible(true);
+                    field.setFloat(mSwipeRefresh, mDistanceToTriggerSync);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                ViewTreeObserver obs = mSwipeRefresh.getViewTreeObserver();
+                obs.removeOnGlobalLayoutListener(this);
+            }
+        });
 
         RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
             @Override
@@ -175,11 +192,84 @@ public class MainActivity extends BaseActivity {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 mLastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+
+//                int firstVisibleItem = ((LinearLayoutManager) mRefreshList.getLayoutManager()).findFirstVisibleItemPosition();
+//                if (firstVisibleItem == 0) {
+//                    if (!isToolbarShow) {
+//                        showToolbar();
+//                    } else {
+//                        if (deltaY > 25 && isToolbarShow) {
+//                            hideToolbar();
+//
+//                        }
+//                        if (deltaY <= -25 && !isToolbarShow) {
+//                            showToolbar();
+//                        }
+//                    }
+//
+//                    if ((isToolbarShow && dy > 0) || (!isToolbarShow && dy < 0)) {
+//                        deltaY += dy;
+//                    }
+//                }
             }
         };
         mRefreshList.addOnScrollListener(mOnScrollListener);
 
         initAdViews();
+    }
+
+    private void showToolbar() {
+        ObjectAnimator anim = ObjectAnimator.ofFloat(mToolbar, "translationY", -mToolbar.getHeight(), 0f);
+        anim.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isToolbarShow = true;
+                deltaY = 0;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        anim.setDuration(500).start();
+    }
+
+    private void hideToolbar() {
+        ObjectAnimator hideAnim = ObjectAnimator.ofFloat(mToolbar, "translationY", 0f, mToolbar.getHeight());
+        hideAnim.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isToolbarShow = false;
+                deltaY = 0;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        hideAnim.setDuration(500).start();
     }
 
     private void initAdViews() {
@@ -190,33 +280,24 @@ public class MainActivity extends BaseActivity {
         mBannerContainer.addView(mCurAdView, rllp);
     }
 
-    private int mLastVisibleItemPosition = 0;
-    private int page = 1;
-    private boolean isRefresh = false;
+    private void showTipAnimation() {
 
-    private RequestManager.OnLaowangItemsRequestListener listener = null;
+    }
 
     private void initData() {
         listener = new RequestManager.OnLaowangItemsRequestListener() {
             @Override
-            public void onSuccess(LaowangItemList list) {
+            public void onSuccess(final LaowangItemList list) {
 
-                final LaowangItemList newlyList = new LaowangItemList();
-                for (LaowangItem item : list.mLaowangList) {
-                    String url = item.item_url;
-                    if (!TextUtils.isEmpty(url)) {
-                        newlyList.mLaowangList.add(item);
-                    }
-                }
                 if (isRefresh) {
-                    adapter.setData(newlyList);
+                    adapter.setData(list);
                     isRefresh = false;
                     mHandler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             if (!mTextTip.isShown())
                                 mTextTip.setVisibility(View.VISIBLE);
-                            mTextTip.setText(String.format(getResources().getString(R.string.str_info_latest_refresh_laowang), newlyList.mLaowangList.size()));
+                            mTextTip.setText(String.format(getResources().getString(R.string.str_info_latest_refresh_laowang), list.mLaowangList.size()));
                             ObjectAnimator anim1 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.0f, 0.8f).setDuration(1500);
                             ObjectAnimator anim2 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.8f, 0.0f).setDuration(1500);
                             AnimatorSet set = new AnimatorSet();
@@ -229,13 +310,13 @@ public class MainActivity extends BaseActivity {
                         adapter.setIsNeedLoadMore(false);
                         adapter.notifyDataSetChanged();
                     } else {
-                        adapter.appendData(newlyList);
+                        adapter.appendData(list);
                         mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 if (!mTextTip.isShown())
                                     mTextTip.setVisibility(View.VISIBLE);
-                                mTextTip.setText(String.format(mTextTip.getText().toString(), newlyList.mLaowangList.size()));
+                                mTextTip.setText(String.format(mTextTip.getText().toString(), list.mLaowangList.size()));
                                 ObjectAnimator anim1 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.0f, 0.8f).setDuration(1500);
                                 ObjectAnimator anim2 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.8f, 0.0f).setDuration(1500);
                                 AnimatorSet set = new AnimatorSet();
@@ -250,8 +331,22 @@ public class MainActivity extends BaseActivity {
             }
 
             @Override
-            public void onError(String error) {
-                Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+            public void onError(final String error) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!mTextTip.isShown())
+                            mTextTip.setVisibility(View.VISIBLE);
+                        ObjectAnimator anim1 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.0f, 0.8f).setDuration(1500);
+                        mTextTip.setText(error);
+                        ObjectAnimator anim2 = ObjectAnimator.ofFloat(mTextTip, "alpha", 0.8f, 0.0f).setDuration(1500);
+                        AnimatorSet set = new AnimatorSet();
+                        set.play(anim2).after(anim1);
+                        set.start();
+                    }
+                }, 50);
+                if (mSwipeRefresh.isRefreshing())
+                    mSwipeRefresh.setRefreshing(false);
             }
         };
         isRefresh = true;
@@ -262,7 +357,7 @@ public class MainActivity extends BaseActivity {
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                RequestManager.getInstance(getApplicationContext()).loadLaowangItems(page++, listener);
+                RequestManager.getInstance(MainActivity.this).loadLaowangItems(MainActivity.this, page++, listener);
             }
         }, 200);
     }

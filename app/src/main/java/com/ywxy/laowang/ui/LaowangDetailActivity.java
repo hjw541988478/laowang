@@ -9,17 +9,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.baidu.mobads.InterstitialAd;
+import com.bumptech.glide.Glide;
 import com.umeng.analytics.MobclickAgent;
 import com.ywxy.laowang.R;
 import com.ywxy.laowang.common.base.BaseActivity;
 import com.ywxy.laowang.common.bean.LaowangItem;
 import com.ywxy.laowang.common.bean.LaowangItemList;
 import com.ywxy.laowang.common.util.Logger;
-import com.ywxy.laowang.net.RequestManager;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import uk.co.senab.photoview.PhotoView;
 
 public class LaowangDetailActivity extends BaseActivity {
@@ -27,19 +24,13 @@ public class LaowangDetailActivity extends BaseActivity {
     public static final String KEY_LAOWANG_ITEMS = "key_laowang";
     public static final String KEY_CUR_POS = "key_cur_pos";
 
-    @Bind(R.id.id_laowang_pager)
     DetailViewPager mPager;
 
-    @Bind(R.id.id_detail_text)
     TextView mText;
     InterstitialAd interAd;
     private LaowangItemList itemList = new LaowangItemList();
     private int curPos = 0;
 
-    @OnClick(R.id.id_detail_back)
-    void onBack() {
-        onBackPressed();
-    }
 
     @Override
     protected void onResume() {
@@ -73,7 +64,14 @@ public class LaowangDetailActivity extends BaseActivity {
             curPos = getIntent().getIntExtra(KEY_CUR_POS, 0);
         }
         setContentView(R.layout.activity_laowang_detail);
-        ButterKnife.bind(this);
+        mPager = (DetailViewPager) findViewById(R.id.id_laowang_pager);
+        mText = (TextView) findViewById(R.id.id_detail_text);
+        findViewById(R.id.id_detail_back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
         interAd = new InterstitialAd(LaowangDetailActivity.this);
         interAd.loadAd();
         mPager.setAdapter(new LaowangPagerAdapter());
@@ -115,8 +113,12 @@ public class LaowangDetailActivity extends BaseActivity {
                     interAd.showAd(LaowangDetailActivity.this);
             }
             LaowangItem item = itemList.mLaowangList.get(position);
-            RequestManager.getInstance(LaowangDetailActivity.this).
-                    loadNetworkImage(photoView, item.item_url);
+//            RequestManager.getInstance(LaowangDetailActivity.this).
+//                    loadNetworkImage(photoView, item.item_url);
+            Glide.with(LaowangDetailActivity.this).load(item.item_url)
+                    .placeholder(R.drawable.ic_default_img)
+                    .error(R.drawable.ic_default_img)
+                    .into(photoView);
             container.addView(photoView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             return photoView;
 
