@@ -13,9 +13,12 @@ public class LaowangItem implements Serializable {
     public String item_url;
 
     public void decodeJson(JSONObject json) throws Exception {
-        item_id = json.getString("id");
-        item_text = json.getString("content");
-        item_url = json.getString("pic_url");
+//        item_id = json.getString("id");
+//        item_text = json.getString("content");
+//        item_url = json.getString("pic_url");
+        item_id = json.getString("objectId");
+        item_text = json.getString("who");
+        item_url = json.getString("url");
     }
 
 }

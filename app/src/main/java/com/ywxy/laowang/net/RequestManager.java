@@ -6,20 +6,20 @@ import android.widget.ImageView;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.ywxy.laowang.common.bean.LaowangItemList;
 import com.ywxy.laowang.common.util.NetUtil;
 
-import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Created by hjw on 2015/8/30 0030.
  */
 public class RequestManager {
 
-    public static final String GIF_URL = "http://pic.962.net/up/2012-8/2012082010565730752.gif";
     public static final String LAOWANG_URL = "http://www.xiaohua123.net/admin.php/Api/?ctime=%s&page=%s";
+    public static final String GANK_IO_URL = "http://gank.avosapps.com/api/data/福利/6/%s";
     //    private static BitmapCache bitmapCache;
     private static RequestManager instance;
     private static RequestQueue requestQueue;
@@ -39,19 +39,20 @@ public class RequestManager {
 
     public static LaowangItemList loadLaowangItems(Context context, int page, final OnLaowangItemsRequestListener listener) {
         final LaowangItemList list = new LaowangItemList();
-        if (!NetUtil.isNetworkAvailable(context)) {
+        if (!NetUtil.checkNet(context)) {
             if (listener != null)
                 listener.onError("请检查网络连接~");
         } else {
-            String requstUrl = String.format(LAOWANG_URL, System.currentTimeMillis() / 1000, page);
-            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(requstUrl, new Response.Listener<JSONArray>() {
+//            String requstUrl = String.format(LAOWANG_URL, System.currentTimeMillis() / 1000, page);
+            String requstUrl = String.format(GANK_IO_URL, page);
+            StringRequest jsonArrayRequest = new StringRequest(requstUrl, new Response.Listener<String>() {
 
                 @Override
-                public void onResponse(JSONArray array) {
-                    if (array != null) {
+                public void onResponse(String jsonObject) {
+                    if (jsonObject != null) {
                         LaowangItemList list = new LaowangItemList();
                         try {
-                            list.decodeJson(array);
+                            list.decodeJson(new JSONObject(jsonObject));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

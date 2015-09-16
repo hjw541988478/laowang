@@ -2,7 +2,7 @@
     <string name="app_name">老王图</string>
     <string name="str_error_network">抱歉，暂无网络</string>
     <string name="str_error_unknown">抱歉，遇到未知错误</string>
-    <string name="str_info_nomore_laowang">老王图已加载完成</string>
+    <string name="str_info_nomore_laowang">End</string>
     <string name="str_info_latest_refresh_laowang">已刷新%s条老王图</string>
     <string name="str_info_latest_load_laowang">已加载%s条老王图</string>
     <string name="title_activity_laowang_detail">LaowangDetailActivity</string>

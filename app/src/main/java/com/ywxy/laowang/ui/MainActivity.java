@@ -1,12 +1,16 @@
 package com.ywxy.laowang.ui;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -27,7 +31,6 @@ import com.umeng.update.UmengUpdateAgent;
 import com.ywxy.laowang.R;
 import com.ywxy.laowang.common.base.BaseActivity;
 import com.ywxy.laowang.common.bean.LaowangItemList;
-import com.ywxy.laowang.common.util.Logger;
 import com.ywxy.laowang.net.RequestManager;
 
 import java.lang.reflect.Field;
@@ -42,7 +45,7 @@ public class MainActivity extends BaseActivity {
     RelativeLayout mBannerContainer;
     ImageView mBannerClose;
     TextView mTextTip;
-    LaowangListAdapter adapter;
+    LaowangGridAdapter adapter;
     Handler mHandler;
     private boolean isBannerAdClicked = false;
     private AdView mCurAdView;
@@ -129,19 +132,20 @@ public class MainActivity extends BaseActivity {
 
 
         mHandler = new Handler(Looper.getMainLooper());
-        mRefreshList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new LaowangListAdapter(this);
+        mRefreshList.setItemAnimator(new DefaultItemAnimator());
+        mRefreshList.setLayoutManager(new GridLayoutManager(this, 2));
+        adapter = new LaowangGridAdapter(this);
+        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         adapter.setFooterView(LayoutInflater.from(this).inflate(R.layout.view_load_more, null),
                 LayoutInflater.from(this).inflate(R.layout.view_end_footer, null));
         adapter.setIsNeedLoadMore(true);
-        adapter.setOnItemClickListener(new LaowangListAdapter.OnItemClickListener() {
+        adapter.setOnItemClickListener(new LaowangGridAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int pos) {
                 LaowangItemList mLaowangList = adapter.getData();
                 Intent intent = new Intent(MainActivity.this, LaowangDetailActivity.class);
                 intent.putExtra(LaowangDetailActivity.KEY_LAOWANG_ITEMS, mLaowangList);
                 intent.putExtra(LaowangDetailActivity.KEY_CUR_POS, pos);
-                Logger.d("onItemClick:pos:" + pos);
                 startActivityForResult(intent, REQUEST_DETAIL_CHECK);
             }
         });
@@ -161,6 +165,7 @@ public class MainActivity extends BaseActivity {
         });
         ViewTreeObserver vto = mSwipeRefresh.getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
             public void onGlobalLayout() {
 
                 final DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -191,7 +196,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                mLastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+                mLastVisibleItemPosition = ((GridLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
 
 //                int firstVisibleItem = ((LinearLayoutManager) mRefreshList.getLayoutManager()).findFirstVisibleItemPosition();
 //                if (firstVisibleItem == 0) {
@@ -292,6 +297,7 @@ public class MainActivity extends BaseActivity {
                 if (isRefresh) {
                     adapter.setData(list);
                     isRefresh = false;
+                    adapter.setIsNeedLoadMore(true);
                     mHandler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
